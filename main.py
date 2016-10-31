@@ -34,8 +34,7 @@ def detect_black_keys(frame):
     points = []
     lower_green = np.array([0,0,0])
     upper_green = np.array([180,255,80])
-    #hsv =  cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
-            #selecting image within HSV-Range
+    #selecting image within HSV-Range
 
     hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv,lower_green,upper_green)
