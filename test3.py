@@ -43,7 +43,7 @@ def detect_black_keys(frame):
     hsv = cv2.resize(hsv,(500,500))
     sat = hsv[:,:,1]
     sat[sat < 200] = 0
-    cv2.imshow("Saturation",mask)
+    # cv2.imshow("Saturation",mask)
     _,contours,_ = cv2.findContours(sat.copy(), 1, 2)
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
