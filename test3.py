@@ -2,12 +2,10 @@ import cv2
 import numpy as np
 import sys
 def detect_white_keys(frame):
-
     #frames = []
-    temp = np.zeros((frame.shape[0],frame.shape[1]),np.uint8)
-    temp2 = np.zeros((frame.shape[0]+2,frame.shape[1]+2),np.uint8)
+    #temp = np.zeros((frame.shape[0],frame.shape[1]),np.uint8)
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
-    temp = cv2.filter2D(gray,cv2.CV_8U,kernel_horizontal)
+    temp = cv2.filter2D(frame,cv2.CV_8U,kernel_horizontal)
     temp[temp > 80] = 0
     temp[temp < 50] = 0
     # print len(frames)
@@ -29,15 +27,19 @@ def detect_white_keys(frame):
          if w*h > 100 and w*h < 300 and w > h:
              cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
 
+def detect_black_keys(frame):
+    hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    cv2.imshow("Saturation",hsv[:,:,1])
+
 if __name__ == '__main__':
     try:
         vidFile = cv2.VideoCapture("sample_videos/VID_20161024_165559.mp4")
     except:
-        print "problem opening input stream"
+        print "Problem opening input stream"
         sys.exit(1)
 
     if not vidFile.isOpened():
-        print "capture stream not open"
+        print "Capture stream not open"
         sys.exit(1)
 
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT)) # one good way of namespacing legacy openCV: cv2.cv.*
@@ -47,6 +49,8 @@ if __name__ == '__main__':
     ret, frame = vidFile.read()
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
+        detect_black_keys(blur)
+        
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
