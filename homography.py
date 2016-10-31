@@ -24,6 +24,9 @@ def transformPoints(transform_matrix,points):
             py = int(ty/tz)
             Z = int(1/tz)
 
+            # print (x,y)
+            # print (px,py)
+            # print "============="
             yield (px, py)
     else:
         yield (0,0)
@@ -45,31 +48,31 @@ if __name__ == '__main__':
     print "frame number: %s" %nFrames
     fps = vidFile.get(cv2.CAP_PROP_FPS)
     print "FPS value: %s" %fps
-    sift = cv2.xfeatures2d.SIFT_create()
-    MIN_MATCH_COUNT = 1
-    kp_template, des_template = sift.detectAndCompute(im_template,None)
+    hessian_threshold = 85
+    sift = cv2.xfeatures2d.SURF_create(hessian_threshold)
+    MIN_MATCH_COUNT = 2
+    kp_template, des_template = sift.detectAndCompute(im_template,None,useProvidedKeypoints = False)
     while ret:
         im_template = cv2.imread("templates/template_repainted.png")
-        kp_frame, des_frame = sift.detectAndCompute(frame,None)
+        kp_frame, des_frame = sift.detectAndCompute(frame,None,useProvidedKeypoints = False)
         FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 3)
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
         search_params = dict(checks = 50)
         flann = cv2.FlannBasedMatcher(index_params, search_params)
         matches = flann.knnMatch(des_template,des_frame,k=2)
 
         good = []
         for m,n in matches:
-            if m.distance < 0.7*n.distance:
+            if m.distance < n.distance:
                 good.append(m)
 
-        if len(good) > MIN_MATCH_COUNT:
+        if len(good) >= MIN_MATCH_COUNT:
             src_pts = np.float32([ kp_template[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
             dst_pts = np.float32([ kp_frame[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
 
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
             matchesMask = mask.ravel().tolist()
             point = [[869, 157],[85, 138],[479, 101],[1, 561],[86, 138],[481, 101],[821, 191],[86, 138],[482, 101],[1078, 446],[1, 568],[826, 191],[86, 139],[481, 101]]
-            # dst = cv2.perspectiveTransform(point,M)
             for (x,y) in transformPoints(M,point):
                 cv2.rectangle(im_template,(x,y),(x+5,y+5),255)
             cv2.imshow("Um",im_template)
@@ -80,7 +83,7 @@ if __name__ == '__main__':
             # if M != None:
             #     dst = cv2.perspectiveTransform(pts,M)
             #
-            #     img2 = cv2.polylines(frame,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+            #     img2 = cv2.polylines(frame,[np.int32(dst)],True,(0,255,0),3, cv2.LINE_AA)
             #     draw_params = dict(matchColor = (0,255,0), singlePointColor = None, matchesMask = matchesMask, flags = 2)
             #     img3 = cv2.drawMatches(im_template,kp_template,img2,kp_frame,good,None,**draw_params)
             #     img3 = cv2.resize(img3,(500,500))
