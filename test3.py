@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import sys
 def detect_white_keys(frame):
+    points = []
     #frames = []
     #temp = np.zeros((frame.shape[0],frame.shape[1]),np.uint8)
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
@@ -25,11 +26,14 @@ def detect_white_keys(frame):
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
          if w*h > 100 and w*h < 300 and w > h:
-             cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+             #cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+             points.append((x,y,w,h))
+    return points
 
 def detect_black_keys(frame):
+    points = []
     lower_green = np.array([0,0,0])
-    upper_green = np.array([180,255,100])
+    upper_green = np.array([180,255,80])
     #hsv =  cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
             #selecting image within HSV-Range
 
@@ -39,7 +43,14 @@ def detect_black_keys(frame):
     hsv = cv2.resize(hsv,(500,500))
     sat = hsv[:,:,1]
     sat[sat < 200] = 0
-    cv2.imshow("Saturation",sat)
+    cv2.imshow("Saturation",mask)
+    _,contours,_ = cv2.findContours(sat.copy(), 1, 2)
+    for cnt in contours:
+         x,y,w,h = cv2.boundingRect(cnt)
+         if w*h > 100 and w*h < 300 and w > h:
+             #cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+             points.append((x,y,w,h))
+    return points
 
 if __name__ == '__main__':
     try:
@@ -59,10 +70,14 @@ if __name__ == '__main__':
     ret, frame = vidFile.read()
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
-        detect_black_keys(blur)
+        points  = detect_black_keys(blur)
 
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray,(500,500))
+
+        points += detect_white_keys(gray)
+        for (x,y,w,h) in points:
+            cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
