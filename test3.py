@@ -28,8 +28,18 @@ def detect_white_keys(frame):
              cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
 
 def detect_black_keys(frame):
+    lower_green = np.array([0,0,0])
+    upper_green = np.array([180,255,100])
+    #hsv =  cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
+            #selecting image within HSV-Range
+
     hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-    cv2.imshow("Saturation",hsv[:,:,1])
+    mask = cv2.inRange(hsv,lower_green,upper_green)
+    hsv[mask == 0] = 0
+    hsv = cv2.resize(hsv,(500,500))
+    sat = hsv[:,:,1]
+    sat[sat < 200] = 0
+    cv2.imshow("Saturation",sat)
 
 if __name__ == '__main__':
     try:
@@ -50,8 +60,9 @@ if __name__ == '__main__':
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         detect_black_keys(blur)
-        
+
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
+        gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
