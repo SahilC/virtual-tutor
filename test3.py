@@ -68,6 +68,21 @@ while ret:  # note that we don't have to use frame number here, we could read fr
     #val[:,:,0][disp == 255] = 255
     #val[:,:,1][disp == 255] = 0
     #val[:,:,2][disp == 255] = 0
+    #frames = []
+    #temp = np.zeros((frame.shape[0],frame.shape[1]),np.uint8)
+    # print len(frames)
+    # if len(frames) > 3:
+    #    #im = np.median(frames,0)
+    #    #temp[temp <= im] = 0
+    #    im =  np.float32(temp) - np.float32(frames[0])
+    #    im[im < 0] = 0
+    #    del frames[0]
+    # #    for i in im:
+    # #        for j in i:
+    # #            print j,
+    # #        print ''
+    # #    cv2.imshow("mean image",np.uint8(im))
+    # frames.append(np.float32(temp))
     temp = show - temp
     cv2.imshow("frameWindow",temp)
     #if i%24 == 0:
