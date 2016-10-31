@@ -46,7 +46,6 @@ def detect_black_keys(frame):
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
          if w*h > 100 and w*h < 300 and w > h:
-             #cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
              points.append((x,y,w,h))
     return points
 
