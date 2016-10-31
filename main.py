@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+
 def detect_white_keys(frame):
     points = []
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
