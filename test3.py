@@ -40,10 +40,9 @@ def detect_black_keys(frame):
     hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv,lower_green,upper_green)
     hsv[mask == 0] = 0
-    hsv = cv2.resize(hsv,(500,500))
+
     sat = hsv[:,:,1]
     sat[sat < 200] = 0
-    # cv2.imshow("Saturation",mask)
     _,contours,_ = cv2.findContours(sat.copy(), 1, 2)
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
@@ -73,11 +72,10 @@ if __name__ == '__main__':
         points  = detect_black_keys(blur)
 
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
-        gray = cv2.resize(gray,(500,500))
-
         points += detect_white_keys(gray)
         for (x,y,w,h) in points:
             cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+        gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
