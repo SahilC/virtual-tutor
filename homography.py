@@ -4,7 +4,7 @@ import sys
 
 def transform_points(transform_matrix,points):
     val, H = cv2.invert(transform_matrix)
-    for (x,y) in points:
+    for (x,y,w,h) in points:
         h0 = H[0,0]
         h1 = H[0,1]
         h2 = H[0,2]
@@ -29,8 +29,8 @@ def plot_homography(frame,pts_list):
     hessian_threshold = 85
     sift = cv2.xfeatures2d.SURF_create(hessian_threshold)
     MIN_MATCH_COUNT = 10
-    kp_template, des_template = sift.detectAndCompute(im_template,None,useProvidedKeypoints = False)
     im_template = cv2.imread("templates/template_repainted.png")
+    kp_template, des_template = sift.detectAndCompute(im_template,None,useProvidedKeypoints = False)
     kp_frame, des_frame = sift.detectAndCompute(frame,None,useProvidedKeypoints = False)
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
@@ -47,12 +47,18 @@ def plot_homography(frame,pts_list):
         src_pts = np.float32([ kp_template[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
         dst_pts = np.float32([ kp_frame[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
 
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.LMEDS,5.0)
+        M, mask = cv2.findHomography(dst_pts,src_pts, cv2.LMEDS,5.0)
         matchesMask = mask.ravel().tolist()
-        if M is not None:
-            for (x,y) in transform_points(M,pts_list):
-                cv2.rectangle(im_template,(x,y),(x+5,y+5),255)
-            cv2.imshow(im_template)
+        if M is not None and len(pts_list) > 0:
+            pts = []
+            for (x,y,w,h) in pts_list:
+                pts.append([x,y])
+            pts = np.float32(pts).reshape(-1,1,2)
+
+            dst = np.uint8(cv2.perspectiveTransform(pts,M))
+            for point in dst:
+                cv2.rectangle(im_template,(point[0][0],point[0][1]),(point[0][0]+5,point[0][1]+5),255)
+            cv2.imshow("Template",im_template)
         # h,w,c = im_template.shape
         # pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
         # if M != None:
