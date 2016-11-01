@@ -13,7 +13,6 @@ def get_key_id_map(key_map):
 
     map_copy.sort()
     key_id_map = dict()
-    print('Total keys '+ str(len(map_copy)))
     for i in range(0,len(map_copy)):
         if map_copy[i] == 0:
             continue
@@ -51,7 +50,6 @@ def play_note(note_id):
         return
     note_name = note_map[note_id]
     filename = 'tones/raw/'+str(note_name)+'.wav'
-    print(filename)
 #    ws.PlaySound(filename, ws.SND_FILENAME) # Just a test. Winsound works only for Windows and is slower.
     #ps.playsound(filename)
     pygame.mixer.Sound(filename).play()
