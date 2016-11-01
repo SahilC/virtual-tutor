@@ -10,9 +10,8 @@ def get_black_keymap(frame):
     mask_black = cv2.inRange(frame,lower_black,upper_black)
     retval, labels = cv2.connectedComponents(mask_black)
     output = np.zeros_like(labels, dtype=np.uint8)
-    cv2.normalize(labels, output, 0 , 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    cv2.normalize(labels, output, 0 , 100, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
     mask = output.copy()
-    cv2.imshow("Black_map",mask)
     return output
 
 def get_white_keymap(frame):
@@ -37,12 +36,20 @@ def get_white_keymap(frame):
     mask = cv2.bitwise_and(mask,con)
     retval, labels = cv2.connectedComponents(mask)
     output = np.zeros_like(labels, dtype=np.uint8)
-    cv2.normalize(labels, output, 0 , 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    cv2.normalize(labels, output, 100 , 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    counts = np.bincount(output.flatten())
+    ind = np.argpartition(counts,-3)[-3:]
+    output[ output == ind[0]] = 0
+    output[ output == ind[1]] = 0
+    output[ output == ind[2]] = 0
+    # max_label = np.argmax(counts)
+    # output[output == max_label] = 0
     return output
 
 def get_keymaps():
-    calibration_im = cv2.imread('')
+    calibration_im = cv2.imread('templates/calibration.png')
     hsv =  cv2.cvtColor(calibration_im,cv2.COLOR_BGR2HSV)
     white_keymap = get_white_keymap(hsv)
     black_keymap = get_black_keymap(hsv)
-    return (white_keymap,black_keymap)
+    keymap = cv2.bitwise_or(white_keymap,black_keymap)
+    return keymap

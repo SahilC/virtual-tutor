@@ -46,6 +46,8 @@ if __name__ == '__main__':
         print "Capture stream not open"
         sys.exit(1)
 
+    keymap = get_keymaps()
+    cv2.imshow("HELLo",keymap)
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
     print "frame number: %s" %nFrames
     fps = vidFile.get(cv2.CAP_PROP_FPS)
@@ -58,7 +60,8 @@ if __name__ == '__main__':
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         points += detect_white_keys(gray)
         for (x,y,w,h) in points:
-            cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+            if keymap[y,x] != 0:
+                cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
