@@ -52,21 +52,16 @@ if __name__ == '__main__':
     fps = vidFile.get(cv2.CAP_PROP_FPS)
     print "FPS value: %s" %fps
     ret, frame = vidFile.read()
-    fgbg = cv2.createBackgroundSubtractorMOG2()
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         points  = detect_black_keys(blur)
 
-        fmask = fgbg.apply(frame)
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         points += detect_white_keys(gray)
-        cv2.imshow("Activity Mask",fmask)
-        # for (x,y,w,h) in points:
-        #     cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+        for (x,y,w,h) in points:
+            cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
 
-        #plot_homography(gray,points)
-        plot_homography_improved(gray,points)
-        # gray = cv2.resize(gray,(500,500))
-        # cv2.imshow("frameWindow",gray)
+        gray = cv2.resize(gray,(500,500))
+        cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
