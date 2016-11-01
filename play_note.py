@@ -5,7 +5,20 @@ Created on Mon Oct 31 21:14:45 2016
 @author: Pranav
 """
  
-import winsound as ws
+#import winsound as ws
+import playsound as ps
+
+def get_key_id_map(key_map):
+    map_copy = list(key_map)
+    
+    map_copy.sort()
+    key_id_map = dict()
+    print('Total keys '+ str(len(map_copy)))
+    for i in range(0,len(map_copy)):
+        if map_copy[i] == 0:
+            continue
+        key_id_map[map_copy[i]] = i+1
+    return key_id_map
 
 def play_note(note_id):
     note_map = {1:'pianoa1',
@@ -25,22 +38,27 @@ def play_note(note_id):
                 15:'pianofg1',
                 16:'pianog1',
                 17:'pianoga1',
-                18:'pianoga1',
-                19:'pianoga1',
-                20:'pianoga1',
-                21:'pianoga1',
-                22:'pianoga1',
-                23:'pianoga1',
-                24:'pianoga1',
+                18:'pianoa1',
+                19:'pianoab1',
+                20:'pianob1',
+                21:'pianoc1',
+                22:'pianoc2',
+                23:'pianocd1',
+                24:'pianocd2',
                 }
-    note_id += 1
     if note_id < 1 or note_id > len(note_map):
-        print('No note found.')        
+        print('No note found for id' + str(note_id))        
         return
     note_name = note_map[note_id]
     filename = 'tones/raw/'+str(note_name)+'.wav'
     print(filename)
-    ws.PlaySound(filename, ws.SND_FILENAME)
-
-for i in range(0,17):
-    play_note(i)
+#    ws.PlaySound(filename, ws.SND_FILENAME) # Just a test. Winsound works only for Windows and is slower.
+    ps.playsound(filename)
+    
+def play_key(key, key_id_map):
+    if key in key_id_map:
+        note_id = key_id_map[key]
+#        print('Note ID ' + str(note_id))
+        play_note(note_id)
+    else:
+        print('Cannot map key to note. Ignoring key press.')

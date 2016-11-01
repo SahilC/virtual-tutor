@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import sys
 from extract_key import get_keymaps
+from play_note import *
+import thread
 
 def detect_white_keys(frame):
     points = []
@@ -47,6 +49,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     keymap = get_keymaps()
+    print(np.unique(keymap))
+    key_id_map = get_key_id_map(np.unique(keymap))
     cv2.imshow("HELLo",keymap)
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
     print "frame number: %s" %nFrames
@@ -62,8 +66,16 @@ if __name__ == '__main__':
         for (x,y,w,h) in points:
             if keymap[y,x] != 0:
                 cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+                key = keymap[y,x]
+                # Play the sound asynchronously
+                thread.start_new_thread(play_key, (key, key_id_map))              
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
+
+    # Release the VideoCapture object, wait for user to press a key and then close all windows
+    vidFile.release()    
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
