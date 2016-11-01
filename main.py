@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+from extract_key import get_keymaps
 
 def detect_white_keys(frame):
     points = []
