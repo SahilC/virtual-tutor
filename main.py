@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+from homography import plot_homography
 
 def detect_white_keys(frame):
     points = []
@@ -59,6 +60,7 @@ if __name__ == '__main__':
         for (x,y,w,h) in points:
             cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
 
+        plot_homography(gray,points)
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
         cv2.waitKey(int(1/fps*1000))
