@@ -4,13 +4,13 @@ Created on Mon Oct 31 21:14:45 2016
 
 @author: Pranav
 """
- 
-#import winsound as ws
-import playsound as ps
+import pygame
+
+pygame.init()
 
 def get_key_id_map(key_map):
     map_copy = list(key_map)
-    
+
     map_copy.sort()
     key_id_map = dict()
     print('Total keys '+ str(len(map_copy)))
@@ -47,14 +47,15 @@ def play_note(note_id):
                 24:'pianocd2',
                 }
     if note_id < 1 or note_id > len(note_map):
-        print('No note found for id' + str(note_id))        
+        print('No note found for id' + str(note_id))
         return
     note_name = note_map[note_id]
     filename = 'tones/raw/'+str(note_name)+'.wav'
     print(filename)
 #    ws.PlaySound(filename, ws.SND_FILENAME) # Just a test. Winsound works only for Windows and is slower.
-    ps.playsound(filename)
-    
+    #ps.playsound(filename)
+    pygame.mixer.Sound(filename).play()
+
 def play_key(key, key_id_map):
     if key in key_id_map:
         note_id = key_id_map[key]
