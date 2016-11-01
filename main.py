@@ -57,18 +57,28 @@ if __name__ == '__main__':
     fps = vidFile.get(cv2.CAP_PROP_FPS)
     print "FPS value: %s" %fps
     ret, frame = vidFile.read()
+    prev_key_presses = list()
+    counter = 0
+    time_slice = 5
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         points  = detect_black_keys(blur)
 
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         points += detect_white_keys(gray)
+        cur_key_presses = list()
         for (x,y,w,h) in points:
-            if keymap[y,x] != 0:
+            key = keymap[y,x]
+            if key != 0 and key not in prev_key_presses:
                 cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
-                key = keymap[y,x]
                 # Play the sound asynchronously
-                thread.start_new_thread(play_key, (key, key_id_map))              
+                thread.start_new_thread(play_key, (key, key_id_map))
+                cur_key_presses.append(key)
+                
+        if len(prev_key_presses) > time_slice:
+            prev_key_presses.remove(prev_key_presses[0])
+        prev_key_presses.append(cur_key_presses)
+                
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
