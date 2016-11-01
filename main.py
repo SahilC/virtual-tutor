@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 import sys
-from homography import plot_homography
-from homography import plot_homography_improved
 
 def detect_white_keys(frame):
     points = []
