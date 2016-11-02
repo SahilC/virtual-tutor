@@ -11,7 +11,7 @@ def detect_white_keys(frame):
     temp = cv2.filter2D(frame,cv2.CV_8U,kernel_horizontal)
     temp[temp > 80] = 0
     temp[temp < 50] = 0
-    _,contours,_ = cv2.findContours(temp.copy(), 1, 2)
+    _,contours,_ = cv2.findContours(temp.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
          if w*h > 100 and w*h < 300 and w > h:
@@ -69,16 +69,17 @@ if __name__ == '__main__':
         cur_key_presses = list()
         for (x,y,w,h) in points:
             key = keymap[y,x]
-            if key != 0 and key not in prev_key_presses:
-                cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
-                # Play the sound asynchronously
-                thread.start_new_thread(play_key, (key, key_id_map))
-                cur_key_presses.append(key)
-                
+            if len(prev_key_presses) > 0:
+                if key != 0 and key not in prev_key_presses:
+                    cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+                    # Play the sound asynchronously
+                    thread.start_new_thread(play_key, (key, key_id_map))
+                    cur_key_presses.append(key)
+
         if len(prev_key_presses) > time_slice:
             prev_key_presses.remove(prev_key_presses[0])
         prev_key_presses.append(cur_key_presses)
-                
+
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
@@ -86,6 +87,6 @@ if __name__ == '__main__':
         ret, frame = vidFile.read()
 
     # Release the VideoCapture object, wait for user to press a key and then close all windows
-    vidFile.release()    
+    vidFile.release()
     cv2.waitKey(0)
     cv2.destroyAllWindows()
