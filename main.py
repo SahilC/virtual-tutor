@@ -4,6 +4,7 @@ import sys
 from extract_key import get_keymaps
 from play_note import *
 import thread
+from extract_calibration_frame import *
 
 def detect_white_keys(frame):
     points = []
@@ -47,8 +48,9 @@ if __name__ == '__main__':
     if not vidFile.isOpened():
         print "Capture stream not open"
         sys.exit(1)
-
-    keymap = get_keymaps()
+    
+    calibration_frame = extract_calibration_frame(vidFile)
+    keymap = get_keymaps(calibration_frame)
     print(np.unique(keymap))
     key_id_map = get_key_id_map(np.unique(keymap))
     cv2.imshow("HELLo",keymap)
@@ -63,21 +65,22 @@ if __name__ == '__main__':
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         points  = detect_black_keys(blur)
-
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         points += detect_white_keys(gray)
         cur_key_presses = list()
         for (x,y,w,h) in points:
             key = keymap[y,x]
-            if key != 0 and key not in prev_key_presses:
-                cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
-                # Play the sound asynchronously
-                thread.start_new_thread(play_key, (key, key_id_map))
-                cur_key_presses.append(key)
+            if len(prev_key_presses) > 0:
+                val = reduce(lambda x,y: x+y,prev_key_presses)
+                if key != 0 and key not in val:
+                    cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
+                    # Play the sound asynchronously
+                    thread.start_new_thread(play_key, (key, key_id_map))
+                    cur_key_presses.append(key)
                 
-        if len(prev_key_presses) > time_slice:
-            prev_key_presses.remove(prev_key_presses[0])
-        prev_key_presses.append(cur_key_presses)
+            if len(prev_key_presses) > time_slice:
+                prev_key_presses.remove(prev_key_presses[0])
+            prev_key_presses.append(cur_key_presses)
                 
 
         gray = cv2.resize(gray,(500,500))

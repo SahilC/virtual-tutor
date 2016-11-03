@@ -47,8 +47,8 @@ def get_white_keymap(frame):
     # output[output == max_label] = 0
     return output
 
-def get_keymaps():
-    calibration_im = cv2.imread('templates/calibration.png')
+def get_keymaps(calibration_im):
+#    calibration_im = cv2.imread('templates/VID_20161102_204909_last_frame.png')
     hsv =  cv2.cvtColor(calibration_im,cv2.COLOR_BGR2HSV)
     white_keymap = get_white_keymap(hsv)
     black_keymap = get_black_keymap(hsv)
