@@ -4,6 +4,7 @@ import sys
 from extract_key import get_keymaps
 from play_note import *
 import thread
+from extract_calibration_frame import *
 
 def detect_white_keys(frame):
     points = []
@@ -11,7 +12,7 @@ def detect_white_keys(frame):
     temp = cv2.filter2D(frame,cv2.CV_8U,kernel_horizontal)
     temp[temp > 80] = 0
     temp[temp < 50] = 0
-    _,contours,_ = cv2.findContours(temp.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    _,contours,_ = cv2.findContours(temp.copy(), 1, 2)
     for cnt in contours:
          x,y,w,h = cv2.boundingRect(cnt)
          if w*h > 100 and w*h < 300 and w > h:
@@ -47,8 +48,9 @@ if __name__ == '__main__':
     if not vidFile.isOpened():
         print "Capture stream not open"
         sys.exit(1)
-
-    keymap = get_keymaps()
+    
+    calibration_frame = extract_calibration_frame(vidFile)
+    keymap = get_keymaps(calibration_frame)
     print(np.unique(keymap))
     key_id_map = get_key_id_map(np.unique(keymap))
     cv2.imshow("HELLo",keymap)
@@ -63,23 +65,23 @@ if __name__ == '__main__':
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         points  = detect_black_keys(blur)
-
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         points += detect_white_keys(gray)
         cur_key_presses = list()
         for (x,y,w,h) in points:
             key = keymap[y,x]
             if len(prev_key_presses) > 0:
-                if key != 0 and key not in prev_key_presses:
+                val = reduce(lambda x,y: x+y,prev_key_presses)
+                if key != 0 and key not in val:
                     cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
                     # Play the sound asynchronously
                     thread.start_new_thread(play_key, (key, key_id_map))
                     cur_key_presses.append(key)
-
-        if len(prev_key_presses) > time_slice:
-            prev_key_presses.remove(prev_key_presses[0])
-        prev_key_presses.append(cur_key_presses)
-
+                
+            if len(prev_key_presses) > time_slice:
+                prev_key_presses.remove(prev_key_presses[0])
+            prev_key_presses.append(cur_key_presses)
+                
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
@@ -87,6 +89,6 @@ if __name__ == '__main__':
         ret, frame = vidFile.read()
 
     # Release the VideoCapture object, wait for user to press a key and then close all windows
-    vidFile.release()
+    vidFile.release()    
     cv2.waitKey(0)
     cv2.destroyAllWindows()
