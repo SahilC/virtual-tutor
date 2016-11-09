@@ -40,7 +40,7 @@ def detect_black_keys(frame):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("sample_videos/VID_20161024_165559.mp4")
+        vidFile = cv2.VideoCapture("sample_videos/Piano/VID_20161102_204909.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -48,10 +48,9 @@ if __name__ == '__main__':
     if not vidFile.isOpened():
         print "Capture stream not open"
         sys.exit(1)
-    
+
     calibration_frame = extract_calibration_frame(vidFile)
     keymap = get_keymaps(calibration_frame)
-    print(np.unique(keymap))
     key_id_map = get_key_id_map(np.unique(keymap))
     cv2.imshow("HELLo",keymap)
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -77,11 +76,11 @@ if __name__ == '__main__':
                     # Play the sound asynchronously
                     thread.start_new_thread(play_key, (key, key_id_map))
                     cur_key_presses.append(key)
-                
+
             if len(prev_key_presses) > time_slice:
                 prev_key_presses.remove(prev_key_presses[0])
             prev_key_presses.append(cur_key_presses)
-                
+
 
         gray = cv2.resize(gray,(500,500))
         cv2.imshow("frameWindow",gray)
@@ -89,6 +88,6 @@ if __name__ == '__main__':
         ret, frame = vidFile.read()
 
     # Release the VideoCapture object, wait for user to press a key and then close all windows
-    vidFile.release()    
+    vidFile.release()
     cv2.waitKey(0)
     cv2.destroyAllWindows()
