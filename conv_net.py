@@ -10,7 +10,7 @@ import tensorflow as tf
 
 # Parameters
 
-learning_rate = 0.001
+learning_rate = 0.00001
 training_iters = 200000
 batch_size = 32
 display_step = 10
@@ -23,6 +23,7 @@ dropout = 0.75 # Dropout, probability to keep units
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, n_input])
 y = tf.placeholder(tf.float32, [None, n_classes])
+
 keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
 
 def get_next_batch(folder, index, batch_size):
@@ -68,6 +69,10 @@ def get_next_batch(folder, index, batch_size):
 
     train_input = np.array(train_input)
     train_output = np.array(train_output)
+
+    p = numpy.random.permutation(len(train_output))
+    train_input = train_input[p]
+    train_output = train_output[p]
     return (train_input, train_output)
 
 # Create some wrappers for simplicity
@@ -114,7 +119,7 @@ def conv_net(x, weights, biases, dropout):
     fc1 = tf.nn.dropout(fc1, dropout)
 
     # Output, class prediction
-    out = tf.nn.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
+    out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
     return out
 
 # Store layers weight & bias
@@ -140,6 +145,7 @@ biases = {
 
 # Construct model
 pred = conv_net(x, weights, biases, keep_prob)
+is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 
 # Define loss and optimizer
 # cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
@@ -158,20 +164,34 @@ with tf.Session() as sess:
     sess.run(init)
     step = 1
     # Keep training until reach max iterations
+    err = []
+    count = 0
     while step * batch_size < training_iters:
         batch_x, batch_y = get_next_batch('resized_train',step * batch_size,batch_size)
         # print(batch_x.shape)
+        if(len(batch_x) == 0 ) {
+            step = 1
+        }
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_prob: dropout})
         if step % display_step == 0:
             # Calculate batch loss and accuracy
             loss = sess.run(cost, feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            err.append(loss)
+
+            if len(err) > 3 and is_increasing(err[-3:]) and count > 2:
+                break
+            elif len(err) > 3 and is_increasing(err[-3:]):
+                count+=1
+                print count
+
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
-            pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: dropout})
-            print(pd.shape)
-            print(batch_y.shape)
+            # print(pd)
+            # print(batch_y)
         step += 1
     print("Optimization Finished!")
-
+    pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: dropout})
+    print(pd)
+    print(batch_y)
 
     # Calculate accuracy for 256 mnist test images
     # print("Testing Accuracy:", sess.run(accuracy, feed_dict={x: mnist.test.images[:256],y: mnist.test.labels[:256],keep_prob: 1.}))
