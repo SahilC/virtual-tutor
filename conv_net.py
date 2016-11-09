@@ -114,7 +114,7 @@ def conv_net(x, weights, biases, dropout):
     fc1 = tf.nn.dropout(fc1, dropout)
 
     # Output, class prediction
-    out = tf.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
+    out = tf.nn.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
     return out
 
 # Store layers weight & bias
@@ -142,12 +142,13 @@ biases = {
 pred = conv_net(x, weights, biases, keep_prob)
 
 # Define loss and optimizer
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
+cost = tf.reduce_mean(tf.square(pred - y))
+optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 # Evaluate model
-correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+# correct_pred = tf.equal(tf.argmax(pred, 1), tfargmax(y, 1))
+# accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 # Initializing the variables
 init = tf.initialize_all_variables()
@@ -163,8 +164,11 @@ with tf.Session() as sess:
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_prob: dropout})
         if step % display_step == 0:
             # Calculate batch loss and accuracy
-            loss, acc = sess.run([cost, accuracy], feed_dict={x: batch_x,y: batch_y,keep_prob: 1.})
-            print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss) + ", Training Accuracy= " + "{:.5f}".format(acc))
+            loss = sess.run(cost, feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
+            pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: dropout})
+            print(pd.shape)
+            print(batch_y.shape)
         step += 1
     print("Optimization Finished!")
 
