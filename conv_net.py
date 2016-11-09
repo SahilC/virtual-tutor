@@ -12,7 +12,7 @@ import tensorflow as tf
 
 learning_rate = 0.001
 training_iters = 200000
-batch_size = 128
+batch_size = 32
 display_step = 10
 
 # Network Parameters
@@ -101,20 +101,20 @@ def conv_net(x, weights, biases, dropout):
     conv2 = tf.nn.relu(conv2)
 
     # Convolution Layer
-    conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
-    # Max Pooling (down-sampling)
-    conv3 = maxpool2d(conv3, k=2)
+    # conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
+    # # Max Pooling (down-sampling)
+    # conv3 = maxpool2d(conv3, k=2)
 
     # Fully connected layer
     # Reshape conv2 output to fit fully connected layer input
-    fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
+    fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
     fc1 = tf.nn.relu(fc1)
     # Apply Dropout
     fc1 = tf.nn.dropout(fc1, dropout)
 
     # Output, class prediction
-    out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
+    out = tf.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
     return out
 
 # Store layers weight & bias
@@ -123,9 +123,9 @@ weights = {
     'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
     # 5x5 conv, 32 inputs, 64 outputs
     'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
-    'wc3': tf.Variable(tf.random_normal([5, 5, 64, 64])),
+    # 'wc3': tf.Variable(tf.random_normal([5, 5, 64, 64])),
     # fully connected, 7*7*64 inputs, 1024 outputs
-    'wd1': tf.Variable(tf.random_normal([13*23*8192, 1024])),
+    'wd1': tf.Variable(tf.random_normal([45*25*64, 1024])),
     # 1024 inputs, 10 outputs (class prediction)
     'out': tf.Variable(tf.random_normal([1024, n_classes]))
 }
@@ -133,7 +133,7 @@ weights = {
 biases = {
     'bc1': tf.Variable(tf.random_normal([32])),
     'bc2': tf.Variable(tf.random_normal([64])),
-    'bc3': tf.Variable(tf.random_normal([64])),
+    # 'bc3': tf.Variable(tf.random_normal([64])),
     'bd1': tf.Variable(tf.random_normal([1024])),
     'out': tf.Variable(tf.random_normal([n_classes]))
 }
@@ -158,8 +158,8 @@ with tf.Session() as sess:
     step = 1
     # Keep training until reach max iterations
     while step * batch_size < training_iters:
-        batch_x, batch_y = get_next_batch('resized_train',step * batch_size,64)
-        print(batch_x.shape)
+        batch_x, batch_y = get_next_batch('resized_train',step * batch_size,batch_size)
+        # print(batch_x.shape)
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_prob: dropout})
         if step % display_step == 0:
             # Calculate batch loss and accuracy
