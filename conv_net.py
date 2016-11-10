@@ -183,7 +183,7 @@ with tf.Session() as sess:
             elif len(err) > 3 and is_increasing(err[-3:]):
                 count+=1
                 print(count)
-            val = predicted_value.eval(feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            #val = predicted_value.eval(feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
             print(val)
             print(batch_y)
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
