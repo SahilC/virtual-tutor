@@ -20,11 +20,34 @@ n_input = 54000 # MNIST data input (img shape: 28*28)
 n_classes = 10 # MNIST total classes (0-9 digits)
 dropout = 0.75 # Dropout, probability to keep units
 
+is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
+
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, n_input])
 y = tf.placeholder(tf.float32, [None, n_classes])
 
 keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
+
+# Store layers weight & bias
+weights = {
+    # 5x5 conv, 1 input, 32 outputs
+    'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
+    # 5x5 conv, 32 inputs, 64 outputs
+    'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
+    # 'wc3': tf.Variable(tf.random_normal([5, 5, 64, 64])),
+    # fully connected, 7*7*64 inputs, 1024 outputs
+    'wd1': tf.Variable(tf.random_normal([45*25*64, 1024])),
+    # 1024 inputs, 10 outputs (class prediction)
+    'out': tf.Variable(tf.random_normal([1024, n_classes]))
+}
+
+biases = {
+    'bc1': tf.Variable(tf.random_normal([32])),
+    'bc2': tf.Variable(tf.random_normal([64])),
+    # 'bc3': tf.Variable(tf.random_normal([64])),
+    'bd1': tf.Variable(tf.random_normal([1024])),
+    'out': tf.Variable(tf.random_normal([n_classes]))
+}
 
 def permute_lists(train_input,train_output):
     p = np.random.permutation(len(train_output))
@@ -156,32 +179,8 @@ def conv_net(x, weights, biases, dropout):
     out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
     return out
 
-# Store layers weight & bias
-weights = {
-    # 5x5 conv, 1 input, 32 outputs
-    'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
-    # 5x5 conv, 32 inputs, 64 outputs
-    'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
-    # 'wc3': tf.Variable(tf.random_normal([5, 5, 64, 64])),
-    # fully connected, 7*7*64 inputs, 1024 outputs
-    'wd1': tf.Variable(tf.random_normal([45*25*64, 1024])),
-    # 1024 inputs, 10 outputs (class prediction)
-    'out': tf.Variable(tf.random_normal([1024, n_classes]))
-}
-
-biases = {
-    'bc1': tf.Variable(tf.random_normal([32])),
-    'bc2': tf.Variable(tf.random_normal([64])),
-    # 'bc3': tf.Variable(tf.random_normal([64])),
-    'bd1': tf.Variable(tf.random_normal([1024])),
-    'out': tf.Variable(tf.random_normal([n_classes]))
-}
-
 # Construct model
 pred = conv_net(x, weights, biases, keep_prob)
-
-#predicted_value = tf.argmax(pred,1)
-is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 
 # Define loss and optimizer
 # cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
@@ -189,9 +188,6 @@ cost = tf.reduce_mean(tf.square(pred - y))
 optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 saver = tf.train.Saver()
-# Evaluate model
-# correct_pred = tf.equal(tf.argmax(pred, 1), tfargmax(y, 1))
-# accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 # Initializing the variables
 init = tf.initialize_all_variables()
