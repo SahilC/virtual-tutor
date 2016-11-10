@@ -5,7 +5,7 @@ from extract_key import get_keymaps
 from extract_calibration_frame import *
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("sample_videos/VID_20161106_194815.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/VID_20161106_194815.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)

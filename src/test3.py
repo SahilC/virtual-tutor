@@ -5,7 +5,7 @@ import sys
 element_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,( 2,2 ),( 0, 0))
 
 try:
-    vidFile = cv2.VideoCapture("sample_videos/piano.mkv")
+    vidFile = cv2.VideoCapture("../sample_videos/piano.mkv")
 except:
     print "problem opening input stream"
     sys.exit(1)

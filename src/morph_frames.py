@@ -34,7 +34,7 @@ def resize_image(im,class_val,filename):
                 new_filename += "_"+str(new_y)
 
     print(filename+":"+new_filename)
-    cv2.imwrite("resized_train/"+class_val+"/"+new_filename+".png",resized)
+    cv2.imwrite("../resized_train/"+class_val+"/"+new_filename+".png",resized)
 
 def morph_exposures_merten(im,filename):
     merge_mertens = cv2.createMergeMertens()
@@ -62,7 +62,7 @@ def morph_exposures_dubvec(im,filename):
     res_debvec_8bit = np.clip(res_debvec*255, 0, 255).astype('uint8')
 
 if __name__ == '__main__':
-    for root, dirs, files in os.walk('PianoTouches/negative/'):
+    for root, dirs, files in os.walk('../PianoTouches/negative/'):
         for basename in files:
             filename = os.path.join(root, basename)
             im = cv2.imread(filename)

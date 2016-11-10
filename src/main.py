@@ -40,7 +40,7 @@ def detect_black_keys(frame):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("sample_videos/Piano/VID_20161102_204909.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161102_204909.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)

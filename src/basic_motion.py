@@ -63,5 +63,5 @@ class BasicMotionDetector(object):
 
 
 if __name__ == "__main__":
-    file_to_read = "sample_videos/Piano/VID_20161102_204909.mp4"
+    file_to_read = "../sample_videos/Piano/VID_20161102_204909.mp4"
     BasicMotionDetector(file_to_read).create("basic_motion.avi")

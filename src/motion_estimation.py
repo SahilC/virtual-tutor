@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture('sample_videos/Piano/VID_20161102_204909.mp4')
+cap = cv2.VideoCapture('../sample_videos/Piano/VID_20161102_204909.mp4')
 
 # params for ShiTomasi corner detection
 feature_params = dict( maxCorners = 100,

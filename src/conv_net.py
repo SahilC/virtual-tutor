@@ -188,6 +188,7 @@ is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 cost = tf.reduce_mean(tf.square(pred - y))
 optimizer = tf.train.AdamOptimizer().minimize(cost)
 
+saver = tf.train.Saver()
 # Evaluate model
 # correct_pred = tf.equal(tf.argmax(pred, 1), tfargmax(y, 1))
 # accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
@@ -203,7 +204,7 @@ with tf.Session() as sess:
     err = []
     count = 0
     while step * batch_size < training_iters:
-        batch_x, batch_y = get_next_batch('resized_train',step * batch_size,batch_size)
+        batch_x, batch_y = get_next_batch('../resized_train',step * batch_size,batch_size)
 
         if(len(batch_x) == 0 ):
             step = 1
@@ -221,7 +222,9 @@ with tf.Session() as sess:
                 print(count)
                 print(val)
                 print(batch_y)
-                
+                save_path = saver.save(sess, "../models/model.ckpt")
+                print("Model saved in file: %s" % save_path)
+
             #val = predicted_value.eval(feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
         step += 1

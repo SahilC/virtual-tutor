@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import sys
 try:
-    vidFile = cv2.VideoCapture("sample_videos/VID_20161024_165559.mp4")
+    vidFile = cv2.VideoCapture("../sample_videos/VID_20161024_165559.mp4")
 except:
     print "problem opening input stream"
     sys.exit(1)

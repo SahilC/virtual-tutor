@@ -49,7 +49,7 @@ def play_note(note_id):
         print('No note found for id' + str(note_id))
         return
     note_name = note_map[note_id]
-    filename = 'tones/raw/'+str(note_name)+'.wav'
+    filename = '../tones/raw/'+str(note_name)+'.wav'
 #    ws.PlaySound(filename, ws.SND_FILENAME) # Just a test. Winsound works only for Windows and is slower.
     #ps.playsound(filename)
     pygame.mixer.Sound(filename).play()
