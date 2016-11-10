@@ -5,9 +5,6 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-# from tensorflow.examples.tutorials.mnist import input_data
-# mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
-
 # Parameters
 
 learning_rate = 0.00001
@@ -16,11 +13,9 @@ batch_size = 64
 display_step = 10
 
 # Network Parameters
-n_input = 54000 # MNIST data input (img shape: 28*28)
-n_classes = 10 # MNIST total classes (0-9 digits)
+n_input = 54000 # Data input (img shape: 28*28)
+n_classes = 10 # Total classes (0-9 digits)
 dropout = 0.75 # Dropout, probability to keep units
-
-is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, n_input])
@@ -48,6 +43,8 @@ biases = {
     'bd1': tf.Variable(tf.random_normal([1024])),
     'out': tf.Variable(tf.random_normal([n_classes]))
 }
+
+is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 
 def permute_lists(train_input,train_output):
     p = np.random.permutation(len(train_output))
@@ -208,12 +205,13 @@ with tf.Session() as sess:
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_prob: dropout})
         if step % display_step == 0:
             # Calculate batch loss and accuracy
-            loss, val = sess.run([cost,pred], feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            loss = sess.run(cost, feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
             err.append(loss)
 
             if len(err) > 3 and is_increasing(err[-3:]) and count > 2:
                 break
             elif len(err) > 3 and is_increasing(err[-3:]):
+                val = sess.run(pred, feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
                 count+=1
                 print(count)
                 print(val)
@@ -225,9 +223,8 @@ with tf.Session() as sess:
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
         step += 1
     print("Optimization Finished!")
-    pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: dropout})
+    pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: 1.})
     print(pd)
     print(batch_y)
 
-    # Calculate accuracy for 256 mnist test images
     # print("Testing Accuracy:", sess.run(accuracy, feed_dict={x: mnist.test.images[:256],y: mnist.test.labels[:256],keep_prob: 1.}))
