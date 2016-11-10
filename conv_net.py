@@ -70,7 +70,7 @@ def get_next_batch(folder, index, batch_size):
     train_input = np.array(train_input)
     train_output = np.array(train_output)
 
-    p = numpy.random.permutation(len(train_output))
+    p = np.random.permutation(len(train_output))
     train_input = train_input[p]
     train_output = train_output[p]
     return (train_input, train_output)
@@ -103,8 +103,6 @@ def conv_net(x, weights, biases, dropout):
     # Max Pooling (down-sampling)
     conv2 = maxpool2d(conv2, k=2)
 
-    conv2 = tf.nn.relu(conv2)
-
     # Convolution Layer
     # conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
     # # Max Pooling (down-sampling)
@@ -119,7 +117,7 @@ def conv_net(x, weights, biases, dropout):
     fc1 = tf.nn.dropout(fc1, dropout)
 
     # Output, class prediction
-    out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
+    out = tf.nn.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
     return out
 
 # Store layers weight & bias
@@ -145,6 +143,8 @@ biases = {
 
 # Construct model
 pred = conv_net(x, weights, biases, keep_prob)
+
+#predicted_value = tf.argmax(pred,1)
 is_increasing = lambda L: reduce(lambda a,b: b if a < b else 9999 , L)!=9999
 
 # Define loss and optimizer
@@ -168,25 +168,25 @@ with tf.Session() as sess:
     count = 0
     while step * batch_size < training_iters:
         batch_x, batch_y = get_next_batch('resized_train',step * batch_size,batch_size)
-        # print(batch_x.shape)
-        if(len(batch_x) == 0 ) {
+
+        if(len(batch_x) == 0 ):
             step = 1
-        }
+
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_prob: dropout})
         if step % display_step == 0:
             # Calculate batch loss and accuracy
-            loss = sess.run(cost, feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            loss, val = sess.run([cost,pred], feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
             err.append(loss)
 
             if len(err) > 3 and is_increasing(err[-3:]) and count > 2:
                 break
             elif len(err) > 3 and is_increasing(err[-3:]):
                 count+=1
-                print count
-
+                print(count)
+            val = predicted_value.eval(feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
+            print(val)
+            print(batch_y)
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
-            # print(pd)
-            # print(batch_y)
         step += 1
     print("Optimization Finished!")
     pd = sess.run(pred, feed_dict = { x: batch_x,keep_prob: dropout})
