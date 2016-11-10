@@ -112,12 +112,12 @@ def conv_net(x, weights, biases, dropout):
     # Reshape conv2 output to fit fully connected layer input
     fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
-    fc1 = tf.nn.relu(fc1)
+    fc1 = tf.nn.softmax(fc1)
     # Apply Dropout
     fc1 = tf.nn.dropout(fc1, dropout)
 
     # Output, class prediction
-    out = tf.nn.softmax(tf.add(tf.matmul(fc1, weights['out']), biases['out']))
+    out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
     return out
 
 # Store layers weight & bias
