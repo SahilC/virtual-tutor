@@ -12,7 +12,7 @@ import tensorflow as tf
 
 learning_rate = 0.00001
 training_iters = 200000
-batch_size = 32
+batch_size = 64
 display_step = 10
 
 # Network Parameters
@@ -26,19 +26,38 @@ y = tf.placeholder(tf.float32, [None, n_classes])
 
 keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
 
+def permute_lists(train_input,train_output):
+    p = np.random.permutation(len(train_output))
+    train_input = train_input[p]
+    train_output = train_output[p]
+    return (train_input,train_output)
+
+def append_list(list_origin,list_target):
+    for i in list_origin:
+        list_target.append(i)
+
 def get_next_batch(folder, index, batch_size):
     train_input = []
     train_output = []
-    ix = 0
-    for root, dirs, files in os.walk(folder+'/negative'):
-        for basename in files:
-            if ix > index and ix <= index + batch_size:
-                filename = os.path.join(root, basename)
-                im = cv2.imread(filename)
-                vec = im.flatten()
-                train_input.append(vec)
-                train_output.append(np.zeros(10))
-            ix += 1
+
+    val = get_positive_batch(folder, (index % 964), batch_size)
+
+    append_list(val[0], train_input)
+    append_list(val[1], train_output)
+
+    val = get_negative_batch(folder, (index % 3634), batch_size)
+
+    append_list(val[0], train_input)
+    append_list(val[1], train_output)
+
+    train_input = np.array(train_input)
+    train_output = np.array(train_output)
+
+    return permute_lists(train_input,train_output)
+
+def get_positive_batch(folder, index, batch_size):
+    train_input = []
+    train_output = []
 
     ix = 0
     for root, dirs, files in os.walk(folder+'/positive'):
@@ -70,9 +89,26 @@ def get_next_batch(folder, index, batch_size):
     train_input = np.array(train_input)
     train_output = np.array(train_output)
 
-    p = np.random.permutation(len(train_output))
-    train_input = train_input[p]
-    train_output = train_output[p]
+    return (train_input, train_output)
+
+def get_negative_batch(folder, index, batch_size):
+    train_input = []
+    train_output = []
+
+    ix = 0
+    for root, dirs, files in os.walk(folder+'/negative'):
+        for basename in files:
+            if ix > index and ix <= index + batch_size:
+                filename = os.path.join(root, basename)
+                im = cv2.imread(filename)
+                vec = im.flatten()
+                train_input.append(vec)
+                train_output.append(np.zeros(10))
+            ix += 1
+
+    train_input = np.array(train_input)
+    train_output = np.array(train_output)
+
     return (train_input, train_output)
 
 # Create some wrappers for simplicity
@@ -183,9 +219,10 @@ with tf.Session() as sess:
             elif len(err) > 3 and is_increasing(err[-3:]):
                 count+=1
                 print(count)
+                print(val)
+                print(batch_y)
+                
             #val = predicted_value.eval(feed_dict= { x: batch_x,y: batch_y,keep_prob: 1.})
-            print(val)
-            print(batch_y)
             print("Iter " + str(step*batch_size) + ", Minibatch Loss= " +"{:.6f}".format(loss))
         step += 1
     print("Optimization Finished!")
