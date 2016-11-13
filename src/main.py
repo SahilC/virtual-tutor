@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 import sys
-from extract_key import get_keymaps
 from play_note import *
 import thread
+from extract_key import get_keymaps
 from extract_calibration_frame import *
 
 def detect_white_keys(frame):
