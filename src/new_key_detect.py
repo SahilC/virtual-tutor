@@ -35,10 +35,16 @@ def detect_black_keys(frame, keymap):
         diff = np.uint8(diff)
 
         kernel_horizontal = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
-        d = cv2.GaussianBlur(cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal),(0,0),3)
-        d[keymap > 100] = 0
-        d[keymap == 0] = 0
-        # d = cv2.resize(d,(500,500))
+        d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
+        # d[keymap > 100] = 0
+        # d[keymap == 0] = 0
+        mask = cv2.resize(d,(500,500))
+        cv2.imshow("Eh",mask)
+        _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        for cnt in contours:
+            x,y,w,h = cv2.boundingRect(cnt)
+            if h < 1.2*w:
+                pts.append((x,y,w,h))
         del points[0]
     points.append(frame)
     return pts
@@ -56,7 +62,7 @@ def smart_threshold(hsv):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161024_165559.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161102_204909.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
