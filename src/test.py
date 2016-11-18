@@ -1,11 +1,20 @@
-import cv2
-import numpy as np
 import sys
+import cv2
+import pickle
+import numpy as np
 from extract_key import get_keymaps
 from extract_calibration_frame import *
 
 lower_white = np.array([0,20,30])
 upper_white = np.array([20,255,255])
+
+def ApplyToImage(img, clf):
+    data = np.reshape(img,(img.shape[0]*img.shape[1],3))
+    predictedLabels = clf.predict(data)
+
+    imgLabels = np.reshape(predictedLabels,(img.shape[0],img.shape[1]))
+    imgLabels = ((-(imgLabels-1)+1)*255)
+    return imgLabels
 
 def activation_map(hsv,points):
     blur = cv2.cvtColor(blur,cv2.COLOR_HSV2GRAY)
@@ -31,12 +40,13 @@ def smart_threshold(hsv):
     for i in xrange(len(counts)):
         if counts[i] == 0:
             break
+    print i
     hue[hue > i] = 0
     return hue
 
 try:
     #vidFile = cv2.VideoCapture("../sample_videos/VID_20161106_194815.mp4")
-    vidFile = cv2.VideoCapture("../sample_videos/VID_20161024_165559.mp4")
+    vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161024_165559.mp4")
 except:
     print "problem opening input stream"
     sys.exit(1)
@@ -57,11 +67,15 @@ ret, frame = vidFile.read() # read first frame, and the return code of the funct
 cv2.imshow("frameWindow2", keymap)
 while ret:  # note that we don't have to use frame number here, we could read from a live written file.
     frame = cv2.GaussianBlur(frame,(0,0),3)
-    hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    with open('../models/tree2.pkl', 'rb') as f:
+        clf = pickle.load(f)
 
-    hue = smart_threshold(hsv)
-    hue[keymap == 0] = 0
-    hue[hue != 0] = 255
+    hue = np.uint8(ApplyToImage(frame, clf))
+    # hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    #
+    # hue = smart_threshold(hsv)
+    # hue[keymap == 0] = 0
+    # hue[hue != 0] = 255
     # max_label = np.argmax(counts)
 
     # output[output != max_label] = 0
