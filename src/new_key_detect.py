@@ -36,10 +36,9 @@ def detect_black_keys(frame, keymap):
 
         kernel_horizontal = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
         d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
-        # d[keymap > 100] = 0
-        # d[keymap == 0] = 0
-        mask = cv2.resize(d,(500,500))
-        cv2.imshow("Eh",mask)
+        d[keymap > 100] = 0
+        d[keymap == 0] = 0
+        d[d < 50] = 0
         _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
             x,y,w,h = cv2.boundingRect(cnt)
