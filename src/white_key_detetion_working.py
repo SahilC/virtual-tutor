@@ -5,7 +5,7 @@ import math
 from extract_key import *
 from extract_calibration_frame import *
 
-def detect_keypress(frame, points, keymap):
+def detect_keypress(frame, points, keymap, prev_key_presses):
     cur_key_presses = set()
     for (x,y,w,h) in points:
         key = keymap[y,x]
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                  if w*h > 50 and w > h:
                      points.append((x,y,w,h))
 
-            detect_keypress(frame, points, keymap)
+            detect_keypress(frame, points, keymap, prev_key_presses)
 
             del frames[0]
         frames.append(diff)
