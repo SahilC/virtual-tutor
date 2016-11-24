@@ -5,6 +5,7 @@ import math
 from extract_key import *
 from extract_calibration_frame import *
 
+element_small = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
 def detect_white_keys(frame):
     points = []
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
@@ -20,7 +21,7 @@ def detect_white_keys(frame):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161106_194815.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161113_171215.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -50,7 +51,7 @@ if __name__ == '__main__':
 
         blur = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         mask = cv2.inRange(blur_hsv,lower_white,upper_white)
-        kernel_horizontal = np.array([[-1,-3,-3,-1],[0,0,0,0],[1,3,3,1]])
+        kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
         diff = cv2.filter2D(blur,cv2.CV_8U,kernel_horizontal)
 
         if len(frames) > 10:
@@ -64,12 +65,22 @@ if __name__ == '__main__':
             counts = counts[0]
             # print counts
             max = counts[-1]
+            count = 0
             for i in xrange(len(counts)-2 ,0,-1):
+                # print str(i) +" " + str(counts[i])
                 if counts[i] - max > 100:
-                    break
+                    count += 1
+                    if count > 1:
+                        break
+                    else:
+                        diff[diff > i] = 0
                 max = counts[i]
+            # print 'WHoa'+str(i)
             diff[diff < i] = 0
-            diff[keymap < 100]
+
+            diff[keymap == 0] = 0
+            # cv2.erode(diff,element_small)
+            cv2.imshow("Keymap",diff)
             # cv2.imshow("DIFF",diff)
             counts = np.bincount(diff.flatten())
             # diff[diff > 0] = 255
