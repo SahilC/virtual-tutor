@@ -20,7 +20,7 @@ def detect_white_keys(frame):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("sample_videos/VID_20161113_171215.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161106_194815.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     calibration_frame = extract_calibration_frame(vidFile)
     # keymap = get_keymaps(calibration_frame)
     keymap = get_white_keymap(cv2.cvtColor(calibration_frame,cv2.COLOR_BGR2HSV))
-    cv2.imshow("white",keymap)
+    # cv2.imshow("white",keymap)
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
     print "frame number: %s" %nFrames
     fps = vidFile.get(cv2.CAP_PROP_FPS)
@@ -56,27 +56,22 @@ if __name__ == '__main__':
         if len(frames) > 10:
             med = np.mean(frames,0)
             diff = np.abs(np.float64(diff) - np.float64(med))
-            #diff = diff -1*np.min(diff)
-            # for i in diff:
-            #     for j in i:
-            #         print j,
-            #     print ''
-            diff = np.uint8(diff)
-            #kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
 
-            # diff[keymap == 0] = 0
-            # hist = cv2.calcHist([diff],[0],None,[256],[0,256])
-            # plt.plot(hist)
-            # diff[mask == 255] = 0
-            counts = np.bincount(diff.flatten())
+            diff = np.uint8(diff)
+
+            # counts = np.bincount(diff.flatten())
+            counts =  np.histogram(diff,bins=range(0,256),range=(0,255),density=False)
+            counts = counts[0]
+            # print counts
             max = counts[-1]
-            print counts
-            for i in xrange(len(counts) -2 ,0,-1):
-                if math.fabs(max - counts[i]) < 30:
+            for i in xrange(len(counts)-2 ,0,-1):
+                if counts[i] - max > 100:
                     break
-            print(i)
+                max = counts[i]
             diff[diff < i] = 0
-            diff[keymap == 0] = 0
+            diff[keymap < 100]
+            # cv2.imshow("DIFF",diff)
+            counts = np.bincount(diff.flatten())
             # diff[diff > 0] = 255
             points = []
             _,contours,_ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
@@ -86,15 +81,13 @@ if __name__ == '__main__':
                  if w*h > 50 and w > h:
                      points.append((x,y,w,h))
 
-            diff1 = cv2.resize(diff,(500,500))
-            cv2.imshow("DIFF",diff1)
 
             cur_key_presses = set()
             for (x,y,w,h) in points:
                 key = keymap[y,x]
                 if key != 0:
                     cur_key_presses.add(key)
-                    print(key)
+                    # print(key)
                     cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
                     # cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
                     # cv2.circle(frame, (x,y), 5, (0,0,255), 3)
