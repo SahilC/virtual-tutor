@@ -29,7 +29,7 @@ def plot_homography(frame,pts_list):
     hessian_threshold = 85
     sift = cv2.xfeatures2d.SURF_create(hessian_threshold)
     MIN_MATCH_COUNT = 10
-    im_template = cv2.imread("templates/template_repainted.png")
+    im_template = cv2.imread("../templates/template_repainted.png")
     kp_template, des_template = sift.detectAndCompute(im_template,None,useProvidedKeypoints = False)
     kp_frame, des_frame = sift.detectAndCompute(frame,None,useProvidedKeypoints = False)
     FLANN_INDEX_KDTREE = 0
@@ -77,7 +77,7 @@ def plot_homography_improved(frame,pts_list):
     hessian_threshold = 85
     orb = cv2.ORB_create()
     MIN_MATCH_COUNT = 10
-    im_template = cv2.imread("templates/template_repainted.png")
+    im_template = cv2.imread("../templates/template_repainted.png")
     kp_template, des_template = orb.detectAndCompute(im_template,None)
     kp_frame, des_frame = orb.detectAndCompute(frame,None)
     bf = cv2.BFMatcher(cv2.NORM_HAMMING,crossCheck = True)

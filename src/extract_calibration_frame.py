@@ -10,9 +10,10 @@ import cv2
 def extract_calibration_frame(vc):
     if vc.isOpened():
         nFrames = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
-        vc.set(cv2.CAP_PROP_FRAME_COUNT, nFrames-1)
+        ret = vc.set(cv2.CAP_PROP_POS_FRAMES, nFrames-2)
         ret, calibration_frame = vc.read()
-        vc.set(cv2.CAP_PROP_FRAME_COUNT, 0)
+        print(ret)
+        vc.set(cv2.CAP_PROP_POS_FRAMES, 0)
         if ret:
             return calibration_frame
     return None
