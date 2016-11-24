@@ -8,7 +8,7 @@ def get_black_keymap(frame):
     lower_black = np.array([0,0,0])
     upper_black = np.array([180,255,100])
     mask_black = cv2.inRange(frame,lower_black,upper_black)
-    mask_black = cv2.erode(mask_black,element_big)
+    mask_black = cv2.dilate(mask_black,element_big)
     retval, labels = cv2.connectedComponents(mask_black)
     output = np.zeros_like(labels, dtype=np.uint8)
     cv2.normalize(labels, output, 0 , 100, cv2.NORM_MINMAX, dtype=cv2.CV_8U)

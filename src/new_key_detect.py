@@ -5,6 +5,7 @@ import math
 from extract_key import get_keymaps
 from extract_calibration_frame import *
 
+element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
 def detect_white_keys(frame,points, keymap):
     pts = []
     kernel_horizontal = np.array([[-1,-3,-3,-1],[0,0,0,0],[1,3,3,1]])
@@ -33,7 +34,7 @@ def detect_white_keys(frame,points, keymap):
     points.append(diff)
     return pts
 
-def detect_black_keys(frame, keymap):
+def detect_black_keys(frame, keymap, points):
     pts = []
     if len(points) > 10:
         med = np.mean(points,0)
@@ -42,15 +43,17 @@ def detect_black_keys(frame, keymap):
 
         kernel_horizontal = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
         d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
-        # d[keymap > 100] = 0
-        # d[keymap == 0] = 0
-        # d[d < 25] = 0
+        d = cv2.erode(d,element_big)
+        d[keymap > 100] = 0
+        d[keymap == 0] = 0
         cv2.imshow("Er",d)
+        cv2.imshow("km",keymap)
+        # blur = cv2.GaussianBlur(d,(0,0),3)
         _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
             x,y,w,h = cv2.boundingRect(cnt)
-            if h < 1.2*w:
-                pts.append((x,y,w,h))
+            # if h < 1.2*w:
+            pts.append((x,y,w,h))
         del points[0]
     points.append(frame)
     return pts
@@ -90,10 +93,10 @@ if __name__ == '__main__':
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
         blur = np.uint8((np.float64(blur) + 10)*245/265)
-        # gray = cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
-        gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
-        # pts = detect_black_keys(gray[:,:,1],keymap)
-        pts = detect_white_keys(gray,points, keymap)
+        gray = cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
+        # gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
+        pts = detect_black_keys(gray[:,:,1],keymap, points)
+        # pts = detect_white_keys(gray,points, keymap)
         if len(pts) > 0:
             for (x,y,w,h) in pts:
                 key = keymap[y,x]
