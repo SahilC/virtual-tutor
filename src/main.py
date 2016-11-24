@@ -6,41 +6,90 @@ import thread
 from extract_key import get_keymaps
 from extract_calibration_frame import *
 
-def detect_white_keys(frame):
-    points = []
+def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 5):
+    cur_key_presses = set()
+    for (x,y,w,h) in points:
+        key = keymap[y,x]
+        if key != 0:
+            cur_key_presses.add(key)
+            cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
+        if len(prev_key_presses) < time_slice:
+            prev_key_presses.add(key)
+        else:
+            prev_key_presses  = set()
+
+def smart_threshold(im):
+    counts =  np.histogram(im,bins=range(0,256),range=(0,255),density=False)
+    counts = counts[0]
+    max = counts[-1]
+    count = 0
+    for i in xrange(len(counts)-2 ,0,-1):
+        if counts[i] - max > 100:
+            count += 1
+            if count > 1:
+                break
+            else:
+                im[im > i] = 0
+        max = counts[i]
+    im[im < i] = 0
+    return i
+
+def detect_white_keys(frame, points, prev_key_presses):
+    blur = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
-    temp = cv2.filter2D(frame,cv2.CV_8U,kernel_horizontal)
-    temp[temp > 80] = 0
-    temp[temp < 50] = 0
-    _,contours,_ = cv2.findContours(temp.copy(), 1, 2)
-    for cnt in contours:
-         x,y,w,h = cv2.boundingRect(cnt)
-         if w*h > 100 and w*h < 300 and w > h:
-             points.append((x,y,w,h))
-    return points
+    diff = cv2.filter2D(blur,cv2.CV_8U,kernel_horizontal)
 
-def detect_black_keys(frame):
-    points = []
-    lower_green = np.array([0,0,0])
-    upper_green = np.array([180,255,80])
-    #selecting image within HSV-Range
+    pts = []
+    if len(points) > 10:
+        med = np.mean(points,0)
+        diff = np.abs(np.float64(diff) - np.float64(med))
+        diff = np.uint8(diff)
 
-    hsv =  cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv,lower_green,upper_green)
-    hsv[mask == 0] = 0
+        smart_threshold(diff)
 
-    sat = hsv[:,:,1]
-    sat[sat < 200] = 0
-    _,contours,_ = cv2.findContours(sat.copy(), 1, 2)
-    for cnt in contours:
-         x,y,w,h = cv2.boundingRect(cnt)
-         if w*h > 100 and w*h < 300 and w > h:
-             points.append((x,y,w,h))
-    return points
+        _,contours,_ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        for cnt in contours:
+             x,y,w,h = cv2.boundingRect(cnt)
+             if w*h > 50 and w > h:
+                 pts.append((x,y,w,h))
+
+        del points[0]
+    points.append(diff)
+    return pts
+
+
+element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
+def detect_black_keys(frame, keymap, points):
+    blur = np.uint8((np.float64(frame) + 10)*245/265)
+    frame = cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
+    frame = frame[:,:,1]
+    pts = []
+    if len(points) > 10:
+        med = np.mean(points,0)
+        diff = np.abs(np.float64(frame) - np.float64(med))
+        diff = np.uint8(diff)
+
+        kernel_horizontal = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
+        d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
+        d = cv2.erode(d,element_big)
+        d[keymap > 100] = 0
+        d[keymap == 0] = 0
+        # cv2.imshow("Er",d)
+        # cv2.imshow("km",keymap)
+        # blur = cv2.GaussianBlur(d,(0,0),3)
+        _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        for cnt in contours:
+            x,y,w,h = cv2.boundingRect(cnt)
+            # if h < 1.2*w:
+            pts.append((x,y,w,h))
+        del points[0]
+    points.append(frame)
+    return pts
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161102_204909.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161113_171032.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -49,45 +98,40 @@ if __name__ == '__main__':
         print "Capture stream not open"
         sys.exit(1)
 
+    white_points = []
+    black_points = []
+    b_key_presses =  set()
+    w_key_presses =  set()
     calibration_frame = extract_calibration_frame(vidFile)
     keymap = get_keymaps(calibration_frame)
-    key_id_map = get_key_id_map(np.unique(keymap))
-    cv2.imshow("HELLo",keymap)
+
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
-    print "frame number: %s" %nFrames
     fps = vidFile.get(cv2.CAP_PROP_FPS)
+    print "frame number: %s" %nFrames
     print "FPS value: %s" %fps
     ret, frame = vidFile.read()
-    prev_key_presses = list()
-    counter = 0
-    time_slice = 5
+
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
-        points  = detect_black_keys(blur)
-        gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
-        points += detect_white_keys(gray)
-        cur_key_presses = list()
-        for (x,y,w,h) in points:
-            key = keymap[y,x]
-            if len(prev_key_presses) > 0:
-                val = reduce(lambda x,y: x+y,prev_key_presses)
-                if key != 0 and key not in val:
-                    cv2.rectangle(gray,(x,y),(x+w,y+h),255,-1)
-                    # Play the sound asynchronously
-                    thread.start_new_thread(play_key, (key, key_id_map))
-                    cur_key_presses.append(key)
 
-            if len(prev_key_presses) > time_slice:
-                prev_key_presses.remove(prev_key_presses[0])
-            prev_key_presses.append(cur_key_presses)
+        pts = detect_black_keys(blur,keymap, black_points)
+        detect_keypress(frame, pts, keymap, b_key_presses)
 
-
-        gray = cv2.resize(gray,(500,500))
-        cv2.imshow("frameWindow",gray)
+        pts = detect_white_keys(blur,white_points, w_key_presses)
+        detect_keypress(frame, pts, keymap, w_key_presses)
+        if len(pts) > 0:
+            for (x,y,w,h) in pts:
+                key = keymap[y,x]
+                if key != 0:
+                    cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),-1)
+        # w2d(gray,keymap)
+        # gray = cv2.resize(diff,(500,500))
+        frame = cv2.resize(frame,(500,500))
+        # cv2.imshow("frameWindow",gray)
+        cv2.imshow("frameWindow2",frame)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
 
     # Release the VideoCapture object, wait for user to press a key and then close all windows
     vidFile.release()
-    cv2.waitKey(0)
     cv2.destroyAllWindows()

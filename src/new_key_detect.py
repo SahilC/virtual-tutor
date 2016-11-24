@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
-        blur = np.uint8((np.float64(blur) + 10)*245/265)
+        # blur = np.uint8((np.float64(blur) + 10)*245/265)
         gray = cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
         # gray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
         pts = detect_black_keys(gray[:,:,1],keymap, points)
