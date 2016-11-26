@@ -8,17 +8,18 @@ from extract_calibration_frame import *
 
 element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
 element_small = cv2.getStructuringElement(cv2.MORPH_RECT,( 5,5 ),( 0, 0))
-def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 5):
-    cur_key_presses = set()
+def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 10):
+    cur_key_presses = []
     for (x,y,w,h) in points:
         key = keymap[y,x]
-        if key != 0:
-            cur_key_presses.add(key)
+        print("Key press...")
+        if key != 0 and key not in prev_key_presses:
+            cur_key_presses.append(key)
             cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
-        if len(prev_key_presses) < time_slice:
-            prev_key_presses.add(key)
-        else:
-            prev_key_presses  = set()
+            prev_key_presses.append(key)
+            print prev_key_presses
+        # if len(prev_key_presses) > time_slice:
+        #     del prev_key_presses[0]
 
 def smart_threshold(im):
     counts =  np.histogram(im,bins=range(0,256),range=(0,255),density=False)
@@ -54,8 +55,8 @@ def detect_white_keys(frame, keymap, points, prev_key_presses):
         diff = cv2.dilate(diff,element_big)
         diff = cv2.erode(diff,element_big)
 
-        diss = cv2.resize(diff,(500,500))
-        cv2.imshow("diff",diss)
+        # diss = cv2.resize(diff,(500,500))
+        # cv2.imshow("diff",diss)
 
         _,contours,_ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
@@ -83,12 +84,13 @@ def detect_black_keys(frame, keymap, points):
         d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
         d[keymap > 100] = 0
         d[keymap == 0] = 0
+
+        # d = cv2.GaussianBlur(d,(0,0),3)
         d = cv2.erode(d,element_big)
         d = cv2.dilate(d,element_big)
         # diss = cv2.resize(d,(500,500))
         # cv2.imshow("Er",diss)
         # cv2.imshow("km",keymap)
-        # blur = cv2.GaussianBlur(d,(0,0),3)
         _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
             x,y,w,h = cv2.boundingRect(cnt)
@@ -100,7 +102,7 @@ def detect_black_keys(frame, keymap, points):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161113_171032.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161102_204909.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -111,22 +113,23 @@ if __name__ == '__main__':
 
     white_points = []
     black_points = []
-    b_key_presses =  set()
-    w_key_presses =  set()
+    b_key_presses =  []
+    w_key_presses =  []
     calibration_frame = extract_calibration_frame(vidFile)
     keymap = get_keymaps(calibration_frame)
-
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = vidFile.get(cv2.CAP_PROP_FPS)
     print "frame number: %s" %nFrames
     print "FPS value: %s" %fps
     ret, frame = vidFile.read()
 
+    count = 0
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
 
         pts = detect_black_keys(blur,keymap , black_points)
         detect_keypress(frame, pts, keymap, b_key_presses)
+        # print b_key_presses
 
         pts = detect_white_keys(blur,keymap , white_points, w_key_presses)
         detect_keypress(frame, pts, keymap, w_key_presses)
@@ -142,6 +145,10 @@ if __name__ == '__main__':
         cv2.imshow("frameWindow2",frame)
         cv2.waitKey(int(1/fps*1000))
         ret, frame = vidFile.read()
+        if len(b_key_presses) > 5:
+            del b_key_presses[0]
+        if len(w_key_presses) > 5:
+            del w_key_presses[0]
 
     # Release the VideoCapture object, wait for user to press a key and then close all windows
     vidFile.release()
