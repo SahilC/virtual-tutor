@@ -6,6 +6,8 @@ import thread
 from extract_key import get_keymaps
 from extract_calibration_frame import *
 
+element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
+element_small = cv2.getStructuringElement(cv2.MORPH_RECT,( 5,5 ),( 0, 0))
 def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 5):
     cur_key_presses = set()
     for (x,y,w,h) in points:
@@ -24,7 +26,7 @@ def smart_threshold(im):
     max = counts[-1]
     count = 0
     for i in xrange(len(counts)-2 ,0,-1):
-        if counts[i] - max > 100:
+        if counts[i] > 300:
             count += 1
             if count > 1:
                 break
@@ -34,7 +36,7 @@ def smart_threshold(im):
     im[im < i] = 0
     return i
 
-def detect_white_keys(frame, points, prev_key_presses):
+def detect_white_keys(frame, keymap, points, prev_key_presses):
     blur = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
     kernel_horizontal = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
@@ -47,11 +49,19 @@ def detect_white_keys(frame, points, prev_key_presses):
         diff = np.uint8(diff)
 
         smart_threshold(diff)
+        diff[keymap < 100] = 0
+
+        diff = cv2.dilate(diff,element_big)
+        diff = cv2.erode(diff,element_big)
+
+        diss = cv2.resize(diff,(500,500))
+        cv2.imshow("diff",diss)
 
         _,contours,_ = cv2.findContours(diff.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
              x,y,w,h = cv2.boundingRect(cnt)
-             if w*h > 50 and w > h:
+             area = cv2.contourArea(cnt)
+             if area > 50 and w > h:
                  pts.append((x,y,w,h))
 
         del points[0]
@@ -59,7 +69,6 @@ def detect_white_keys(frame, points, prev_key_presses):
     return pts
 
 
-element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
 def detect_black_keys(frame, keymap, points):
     blur = np.uint8((np.float64(frame) + 10)*245/265)
     frame = cv2.cvtColor(blur,cv2.COLOR_BGR2HSV)
@@ -72,10 +81,12 @@ def detect_black_keys(frame, keymap, points):
 
         kernel_horizontal = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
         d = cv2.filter2D(diff,cv2.CV_8U,kernel_horizontal)
-        d = cv2.erode(d,element_big)
         d[keymap > 100] = 0
         d[keymap == 0] = 0
-        # cv2.imshow("Er",d)
+        d = cv2.erode(d,element_big)
+        d = cv2.dilate(d,element_big)
+        # diss = cv2.resize(d,(500,500))
+        # cv2.imshow("Er",diss)
         # cv2.imshow("km",keymap)
         # blur = cv2.GaussianBlur(d,(0,0),3)
         _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
@@ -114,10 +125,10 @@ if __name__ == '__main__':
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
 
-        pts = detect_black_keys(blur,keymap, black_points)
+        pts = detect_black_keys(blur,keymap , black_points)
         detect_keypress(frame, pts, keymap, b_key_presses)
 
-        pts = detect_white_keys(blur,white_points, w_key_presses)
+        pts = detect_white_keys(blur,keymap , white_points, w_key_presses)
         detect_keypress(frame, pts, keymap, w_key_presses)
         if len(pts) > 0:
             for (x,y,w,h) in pts:
