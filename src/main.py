@@ -8,13 +8,14 @@ from extract_calibration_frame import *
 
 element_big = cv2.getStructuringElement(cv2.MORPH_RECT,( 10,10 ),( 0, 0))
 element_small = cv2.getStructuringElement(cv2.MORPH_RECT,( 5,5 ),( 0, 0))
-def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 10):
+def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 10, key_id_press =[]):
     cur_key_presses = []
     for (x,y,w,h) in points:
         key = keymap[y,x]
-        print("Key press...")
         if key != 0 and key not in prev_key_presses:
             cur_key_presses.append(key)
+# Play the sound asynchronously
+            thread.start_new_thread(play_key, (key, key_id_map))
             cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
             prev_key_presses.append(key)
             print prev_key_presses
@@ -48,7 +49,6 @@ def detect_white_keys(frame, keymap, points, prev_key_presses):
         med = np.mean(points,0)
         diff = np.abs(np.float64(diff) - np.float64(med))
         diff = np.uint8(diff)
-
         smart_threshold(diff)
         diff[keymap < 100] = 0
 
@@ -88,8 +88,8 @@ def detect_black_keys(frame, keymap, points):
         # d = cv2.GaussianBlur(d,(0,0),3)
         d = cv2.erode(d,element_big)
         d = cv2.dilate(d,element_big)
-        # diss = cv2.resize(d,(500,500))
-        # cv2.imshow("Er",diss)
+        diss = cv2.resize(d,(500,500))
+        cv2.imshow("Er",diss)
         # cv2.imshow("km",keymap)
         _,contours,_ = cv2.findContours(d.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
@@ -102,7 +102,7 @@ def detect_black_keys(frame, keymap, points):
 
 if __name__ == '__main__':
     try:
-        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161102_204909.mp4")
+        vidFile = cv2.VideoCapture("../sample_videos/Piano/VID_20161106_194815.mp4")
     except:
         print "Problem opening input stream"
         sys.exit(1)
@@ -117,6 +117,8 @@ if __name__ == '__main__':
     w_key_presses =  []
     calibration_frame = extract_calibration_frame(vidFile)
     keymap = get_keymaps(calibration_frame)
+    km = cv2.resize(keymap,(500,500))
+    cv2.imshow("KM",km)
     nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = vidFile.get(cv2.CAP_PROP_FPS)
     print "frame number: %s" %nFrames
@@ -124,15 +126,16 @@ if __name__ == '__main__':
     ret, frame = vidFile.read()
 
     count = 0
+    key_id_map = get_key_id_map(np.unique(keymap))
     while ret:
         blur = cv2.GaussianBlur(frame,(0,0),3)
 
         pts = detect_black_keys(blur,keymap , black_points)
-        detect_keypress(frame, pts, keymap, b_key_presses)
+        detect_keypress(frame, pts, keymap, b_key_presses,key_id_map)
         # print b_key_presses
 
         pts = detect_white_keys(blur,keymap , white_points, w_key_presses)
-        detect_keypress(frame, pts, keymap, w_key_presses)
+        detect_keypress(frame, pts, keymap, w_key_presses,key_id_map)
         if len(pts) > 0:
             for (x,y,w,h) in pts:
                 key = keymap[y,x]

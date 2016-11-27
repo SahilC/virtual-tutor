@@ -29,7 +29,7 @@ def plot_homography(frame,pts_list):
     hessian_threshold = 85
     sift = cv2.xfeatures2d.SURF_create(hessian_threshold)
     MIN_MATCH_COUNT = 10
-    im_template = cv2.imread("../templates/template_repainted.png")
+    im_template = cv2.imread("../../templates/template_repainted.png")
     kp_template, des_template = sift.detectAndCompute(im_template,None,useProvidedKeypoints = False)
     kp_frame, des_frame = sift.detectAndCompute(frame,None,useProvidedKeypoints = False)
     FLANN_INDEX_KDTREE = 0
@@ -73,17 +73,19 @@ def plot_homography(frame,pts_list):
         print "Not enough matches are found - %d/%d" % (len(good),MIN_MATCH_COUNT)
         matchesMask = None
 
-def plot_homography_improved(frame,pts_list):
+def plot_homography_improved(frame,pts_list = []):
     hessian_threshold = 85
     orb = cv2.ORB_create()
     MIN_MATCH_COUNT = 10
-    im_template = cv2.imread("../templates/template_repainted.png")
+    im_template = cv2.imread("../../templates/template_repainted.png")
     kp_template, des_template = orb.detectAndCompute(im_template,None)
     kp_frame, des_frame = orb.detectAndCompute(frame,None)
     bf = cv2.BFMatcher(cv2.NORM_HAMMING,crossCheck = True)
     matches = sorted(bf.match(des_template,des_frame),key = lambda x:x.distance)
     im3 = cv2.drawMatches(im_template,kp_template,frame,kp_frame,matches[:5],None,flags = 2)
-    # cv2.imshow("MATCHED",im3)
+    im3 = cv2.resize(im3,(1024,512))
+    cv2.imshow("MATCHED",im3)
+    cv2.waitKey(0)
     # good = []
     # for m,n in matches:
     #     if m.distance < 0.7*n.distance:
@@ -118,3 +120,33 @@ def plot_homography_improved(frame,pts_list):
     # else:
     #     print "Not enough matches are found - %d/%d" % (len(good),MIN_MATCH_COUNT)
     #     matchesMask = None
+
+if __name__ == '__main__':
+    try:
+        vidFile = cv2.VideoCapture("../../sample_videos/Piano/VID_20161102_204909.mp4")
+    except:
+        print "Problem opening input stream"
+        sys.exit(1)
+
+    if not vidFile.isOpened():
+        print "Capture stream not open"
+        sys.exit(1)
+
+    nFrames = int(vidFile.get(cv2.CAP_PROP_FRAME_COUNT))
+    print "frame number: %s" %nFrames
+    fps = vidFile.get(cv2.CAP_PROP_FPS)
+    print "FPS value: %s" %fps
+    ret, frame = vidFile.read()
+    prev_key_presses = list()
+    counter = 0
+    time_slice = 5
+    while ret:
+
+        plot_homography_improved(frame,[])
+        cv2.waitKey(int(1/fps*1000))
+        ret, frame = vidFile.read()
+
+    # Release the VideoCapture object, wait for user to press a key and then close all windows
+    vidFile.release()
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

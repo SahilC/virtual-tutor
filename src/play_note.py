@@ -45,9 +45,12 @@ def play_note(note_id):
                 23:'pianocd1',
                 24:'pianocd2',
                 }
+    print note_id
     if note_id < 1 or note_id > len(note_map):
-        print('No note found for id' + str(note_id))
-        return
+        if note_id > len(note_map):
+            note_id = note_id % 24
+        else:
+            print('No note found for id' + str(note_id))
     note_name = note_map[note_id]
     filename = '../tones/raw/'+str(note_name)+'.wav'
 #    ws.PlaySound(filename, ws.SND_FILENAME) # Just a test. Winsound works only for Windows and is slower.
