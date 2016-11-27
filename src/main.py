@@ -16,9 +16,10 @@ def detect_keypress(frame, points, keymap, prev_key_presses, time_slice = 10, ke
             cur_key_presses.append(key)
 # Play the sound asynchronously
             thread.start_new_thread(play_key, (key, key_id_map))
-            cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
+            if key < 100:
+                print key
+                cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),-1)
             prev_key_presses.append(key)
-            print prev_key_presses
         # if len(prev_key_presses) > time_slice:
         #     del prev_key_presses[0]
 

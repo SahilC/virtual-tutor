@@ -20,7 +20,8 @@ def get_key_id_map(key_map):
     return key_id_map
 
 def play_note(note_id):
-    note_map = {1:'pianoa1',
+    note_map = {
+                1:'pianoa1',
                 2:'pianoab1',
                 3:'pianob1',
                 4:'pianoc1',
@@ -44,8 +45,8 @@ def play_note(note_id):
                 22:'pianoc2',
                 23:'pianocd1',
                 24:'pianocd2',
-                }
-    print note_id
+    }
+
     if note_id < 1 or note_id > len(note_map):
         if note_id > len(note_map):
             note_id = note_id % 24
